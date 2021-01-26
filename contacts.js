@@ -12,7 +12,7 @@ const contactsPath = path.join(__dirname, 'db', 'contacts.json');
 function listContacts() {
   
   fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => console.log(data))
+    .then(data => console.table(data))
   
 }
 
