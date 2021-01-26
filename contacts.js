@@ -1,6 +1,11 @@
 const path = require('path');
 const { promises: fsPromises } = require('fs');
 
+// import path from 'path';
+// import { promises } from 'fs';
+
+// const fsPromises = promises
+
 const contactsPath = path.join(__dirname, 'db', 'contacts.json');
 
 

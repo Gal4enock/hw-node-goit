@@ -1,6 +1,10 @@
 const argv = require('yargs').argv;
-console.log(argv);
+
+// import some from 'yargs';
+// argv = some.argv;
+
 const { listContacts, getContactById, removeContact, addContact } = require ('./contacts.js');
+// import { listContacts, getContactById, removeContact, addContact } from './contacts.js';
 
 
 function invokeAction({ action, id, name, email, phone }) {
