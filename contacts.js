@@ -43,9 +43,10 @@ function addContact(name, email, phone) {
     .catch(err => console.log(err))
 }
 
+
 module.exports = {
   listContacts,
   getContactById,
   removeContact,
-  addContact
+  addContact,
 }

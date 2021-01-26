@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
@@ -20,5 +21,10 @@
   "homepage": "https://github.com/Gal4enock/hw-node-goit#readme",
   "devDependencies": {
     "nodemon": "^2.0.7"
+  },
+  "dependencies": {
+    "yargs": "^16.2.0"
   }
 }
+
+
