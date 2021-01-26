@@ -24,11 +24,9 @@ function getContactById(contactId) {
 function removeContact(contactId) {
   fsPromises.readFile(contactsPath, 'utf-8')
     .then(data => {
-      const newArr = JSON.parse(data);
-      const newContact = {id:11, name, email, phone }
-      newArr.push(newContact)
+      const newContacts = JSON.parse(data).filter(contact => contact.id !== contactId)
       // console.log(newArr);
-      fsPromises.writeFile(contactsPath, JSON.stringify(newArr))
+      fsPromises.writeFile(contactsPath, JSON.stringify(newContacts))
     })
     .catch(err => console.log(err))
 }
