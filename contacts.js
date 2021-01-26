@@ -1,39 +1,48 @@
 const path = require('path');
-const fs = require('fs');
+const { promises: fsPromises } = require('fs');
 
 const contactsPath = path.join(__dirname, 'db', 'contacts.json');
 
 
 function listContacts() {
   
-  fs.readFile(contactsPath,
-    'utf-8',
-    (err, data) => {
-      if (err) throw err;
-      console.log(data);
-    })
+  fsPromises.readFile(contactsPath, 'utf-8')
+    .then(data => console.log(data))
+  
 }
 
 function getContactById(contactId) {
-  // ...твой код
+  fsPromises.readFile(contactsPath, 'utf-8')
+    .then(data => {
+      const contacts = JSON.parse(data);
+      const contact = contacts.filter(contact => contact.id === contactId)
+      console.log(contact);
+    })
+  .catch(err => console.log(err))
 }
 
 function removeContact(contactId) {
-  // ...твой код
+  fsPromises.readFile(contactsPath, 'utf-8')
+    .then(data => {
+      const newArr = JSON.parse(data);
+      const newContact = {id:11, name, email, phone }
+      newArr.push(newContact)
+      // console.log(newArr);
+      fsPromises.writeFile(contactsPath, JSON.stringify(newArr))
+    })
+    .catch(err => console.log(err))
 }
 
 function addContact(name, email, phone) {
-  fs.readFile(contactsPath,
-    'utf-8',
-    (err, data) => {
-      if (err) throw err;
-      
-      fs.writeFile(
-        contactsPath,
-        "utf-8",
-        `${data.toString()}`
-      )
+  fsPromises.readFile(contactsPath, 'utf-8')
+    .then(data => {
+      const newArr = JSON.parse(data);
+      const newContact = {id:11, name, email, phone }
+      newArr.push(newContact)
+      // console.log(newArr);
+      fsPromises.writeFile(contactsPath, JSON.stringify(newArr))
     })
+    .catch(err => console.log(err))
 }
 
 module.exports = {
