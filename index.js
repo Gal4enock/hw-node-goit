@@ -1,12 +1,19 @@
 const argv = require('yargs').argv;
 const cors = require('cors');
 const express = require('express');
+const { HttpCodes, PORT } = require('./constants');
+const contactsRouter = require('./routs/contacts.routs');
 
-const PORT = process.env.PORT || 3000;
+const { listContacts, getContactById, removeContact, addContact } = require ('./contacts.js');
+
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*',
+}));
+app.use(express.json());
+app.use('/api/contacts', contactsRouter)
 
-app.get('/', (req, res, next) => {
+app.get('/api/contacts', (req, res, next) => {
   res.json({message: 'CORS is activated'})
 })
 
@@ -14,7 +21,6 @@ app.listen(PORT, () => {
   console.log('Listening with CORS on port..', PORT);
 })
 
-const { listContacts, getContactById, removeContact, addContact } = require ('./contacts.js');
 
 // function invokeAction({ action, id, name, email, phone }) {
 //   switch (action) {
