@@ -3,7 +3,7 @@ const { promises: fsPromises } = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const Joi = require('joi');
 
-const { HttpCodes } = require('../constants');
+const { HttpCodes } = require('../assets/constants');
 
 const contactsPath = path.join(__dirname,'../', 'db', 'contacts.json');
 
@@ -88,6 +88,21 @@ function updateContact(req, res) {
 
 }
 
+function validationUpdate(req, res, next) {
+  const validationRules = Joi.object({
+    name: Joi.string(),
+    email: Joi.string(),
+    phone: Joi.number()
+  })
+  
+  const validationResult = validationRules.validate(req.body);
+  
+  if (validationResult.error) {
+    return res.status(HttpCodes.BAD_REQUEST).send({"message":validationResult.error.details[0].message})
+  }
+  next();
+} 
+
 function validation(req, res, next) {
   const validationRules = Joi.object({
     name: Joi.string().required(),
@@ -109,5 +124,6 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
-  validation
+  validation,
+  validationUpdate
 }

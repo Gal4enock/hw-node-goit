@@ -1,10 +1,7 @@
-const argv = require('yargs').argv;
 const cors = require('cors');
 const express = require('express');
-const { HttpCodes, PORT } = require('./constants');
-const contactsRouter = require('./routs/contacts.routs');
-
-const { listContacts, getContactById, removeContact, addContact } = require ('./contacts.js');
+const { HttpCodes, PORT } = require('./assets/constants');
+const contactsRouter = require('./routes/contacts.routes');
 
 const app = express();
 app.use(cors({
@@ -20,32 +17,3 @@ app.get('/api/contacts', (req, res, next) => {
 app.listen(PORT, () => {
   console.log('Listening with CORS on port..', PORT);
 })
-
-
-// function invokeAction({ action, id, name, email, phone }) {
-//   switch (action) {
-//     case 'list':
-//       listContacts()
-//       break;
-
-//     case 'get':
-//       // contacts.getContactById(id)
-//       getContactById(id)
-//       break;
-
-//     case 'add':
-//       // contacts.addContact(name, email, phone)
-//       addContact(name, email, phone)
-//       break;
-
-//     case 'remove':
-//       removeContact(id)
-//       break;
-
-//     default:
-//       console.warn('\x1B[31m Unknown action type!');
-//   }
-// }
-
-// invokeAction(argv);
-
