@@ -93,7 +93,7 @@ function validationUpdate(req, res, next) {
     name: Joi.string(),
     email: Joi.string(),
     phone: Joi.number()
-  })
+  }).min(1)
   
   const validationResult = validationRules.validate(req.body);
   
