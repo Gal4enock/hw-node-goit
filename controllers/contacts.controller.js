@@ -1,16 +1,12 @@
-const path = require('path');
-const { promises: fsPromises } = require('fs');
 const mongoose = require('mongoose');
+const { Types: { ObjectId } } = require('mongoose');
 const Joi = require('joi');
-const { MongoClient, ObjectID } = require('mongodb');
 const dotenv = require('dotenv');
 
 const { HttpCodes } = require('../assets/constants');
 const Contact = require('../models/Contact');
-const contactsPath = path.join(__dirname,'../', 'db', 'contacts.json');
 
 dotenv.config();
-let contacts;
 
 const DB_PASSWORD = process.env.DB_PASSWORD;
 const DB_NAME = process.env.DB_NAME;
@@ -19,85 +15,86 @@ const MONGO_URL = `mongodb+srv://JonhSnow:${DB_PASSWORD}@cluster0.heyeb.mongodb.
 
 start();
 
-async function start() {
-  await mongoose.connect(MONGO_URL, {
+function start() {
+ const connection = mongoose.connect(MONGO_URL, {
    useUnifiedTopology: true 
   });
-  // const db = client.db();
-
-  // contacts = db.collection('contacts')
+  connection
+    .then(() => { console.log("Database connection successful") })
+    .catch((err) => {
+      console.log(`Server not running. Error message: ${err.message}`)
+      process.exit(1)
+    }
+  );
 }
 
 async function listContacts(req, res) {
     const contacts = await Contact.find();
   res.status(HttpCodes.OK).json(contacts);
-
 }
 
-function getContactById(req, res) {
+async function getContactById(req, res) {
   const { contactId } = req.params;
-  fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => {
-      const contacts = JSON.parse(data);
-      const contact = contacts.filter(contact => contact.id == contactId);
 
-      if (!contact.length) {
-        return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
-      }
+  if (!ObjectId.isValid(contactId)) {
+  return res.status(400).send({'message': 'Your Id is not valid'})
+  }
+  
+  const contact = await Contact.findById(contactId);
 
-     res.status(HttpCodes.OK).json(contact);
-    })
-  .catch(err => res.status(HttpCodes.NOT_FOUND).json({"message": "Not found"}))
+  if (!contact) {
+    return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
+  }
+
+  res.status(HttpCodes.OK).json(contact)
 }
 
-function removeContact(req, res) {
+async function removeContact(req, res) {
   const { contactId } = req.params;
-  fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => {
-      const newContacts = JSON.parse(data).filter(contact => contact.id !== contactId)
-      fsPromises.writeFile(contactsPath, JSON.stringify(newContacts));
 
-      if (newContacts.length === JSON.parse(data).length) {
-        return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
-      }
+ if (!ObjectId.isValid(contactId)) {
+  return res.status(400).send({'message': 'Your Id is not valid'})
+}
 
-     res.status(HttpCodes.OK).json({"message": "contact deleted"});
-    })
-    .catch(err => console.log(err))
+  const deletedContact = await Contact.findByIdAndDelete(contactId);
+
+  if (!deletedContact) {
+    return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
+  }
+  res.status(HttpCodes.OK).json({ "message": `contact ${deletedContact.name} deleted` });
 }
 
 async function addContact(req, res) {
+  try {
   const { body } = req;
-  const newContact = await contacts.insertOne(body);
-  res.status(HttpCodes.CREATED).json(newContact.ops[0]);
- 
+  const newContact = await Contact.create(body);
+  res.status(HttpCodes.CREATED).json(newContact);
+  } catch (err) {
+    res.status(400).send({'message': 'Something went wrong'})
+  }
 }
 
 async function updateContact(req, res) {
   const { body } = req;
   const { contactId } = req.params;
 
-  console.log(body);
-
   if (!body) {
     return res.status(HttpCodes.BAD_REQUEST).json({"message": "missing fields"})
   }
 
-  if (!ObjectID.isValid(contactId)) {
-  return res.status(400).send({'message': 'Your ID is not valid'})
+  if (!ObjectId.isValid(contactId)) {
+  return res.status(400).send({'message': 'Your Id is not valid'})
 }
 
-  const contactToChange = await contacts.updateOne({
-    _id: ObjectID(contactId) 
-  }, {
-    $set: body
-  })
-
-  if (!contactToChange) {
+ const contactToChange = await Contact.findByIdAndUpdate(contactId, body, {
+   new: true
+ })
+  
+ if (!contactToChange) {
         return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
       }
 
-     res.status(HttpCodes.OK).json(contactToChange);
+  res.status(HttpCodes.OK).json(contactToChange);
 
 }
 
