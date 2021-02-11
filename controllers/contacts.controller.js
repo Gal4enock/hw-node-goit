@@ -2,15 +2,33 @@ const path = require('path');
 const { promises: fsPromises } = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const Joi = require('joi');
+const { MongoClient } = require('mongodb');
+const dotenv = require('dotenv');
 
 const { HttpCodes } = require('../assets/constants');
-
 const contactsPath = path.join(__dirname,'../', 'db', 'contacts.json');
 
+dotenv.config();
+let contacts;
 
-function listContacts(req, res) {
-  (fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => res.status(HttpCodes.OK).json(data)))
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_NAME = process.env.DB_NAME;
+
+const MONGO_URL = `mongodb+srv://JonhSnow:${DB_PASSWORD}@cluster0.heyeb.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
+
+start();
+
+async function start() {
+  const client = await MongoClient.connect(MONGO_URL);
+  const db = client.db();
+
+  contacts = db.collection('contacts')
+}
+
+async function listContacts(req, res) {
+    const data = await contacts.find().toArray();
+  res.status(HttpCodes.OK).json(data);
+
 }
 
 function getContactById(req, res) {
@@ -45,18 +63,19 @@ function removeContact(req, res) {
     .catch(err => console.log(err))
 }
 
-function addContact(req, res) {
-  const { name, email, phone } = req.body;
-
-  fsPromises.readFile(contactsPath, 'utf-8')
-  .then(data => {
-    const newArr = JSON.parse(data);
-    const newContact = {id:uuidv4(), name, email, phone }
-    newArr.push(newContact)
-    fsPromises.writeFile(contactsPath, JSON.stringify(newArr))
-    res.status(HttpCodes.CREATED).json(newContact);
-  })
-  .catch(err => console.log(err))
+async function addContact(req, res) {
+  const { body } = req;
+  const newContact = await contacts.insertOne(body);
+  res.status(HttpCodes.CREATED).json(newContact);
+  // fsPromises.readFile(contactsPath, 'utf-8')
+  // .then(data => {
+  //   const newArr = JSON.parse(data);
+  //   const newContact = {id:uuidv4(), name, email, phone }
+  //   newArr.push(newContact)
+  //   fsPromises.writeFile(contactsPath, JSON.stringify(newArr))
+  //   res.status(HttpCodes.CREATED).json(newContact);
+  // })
+  // .catch(err => console.log(err))
 }
 
 function updateContact(req, res) {
