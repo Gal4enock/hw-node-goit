@@ -1,11 +1,12 @@
 const path = require('path');
 const { promises: fsPromises } = require('fs');
-const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 const Joi = require('joi');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectID } = require('mongodb');
 const dotenv = require('dotenv');
 
 const { HttpCodes } = require('../assets/constants');
+const Contact = require('../models/Contact');
 const contactsPath = path.join(__dirname,'../', 'db', 'contacts.json');
 
 dotenv.config();
@@ -19,15 +20,17 @@ const MONGO_URL = `mongodb+srv://JonhSnow:${DB_PASSWORD}@cluster0.heyeb.mongodb.
 start();
 
 async function start() {
-  const client = await MongoClient.connect(MONGO_URL);
-  const db = client.db();
+  await mongoose.connect(MONGO_URL, {
+   useUnifiedTopology: true 
+  });
+  // const db = client.db();
 
-  contacts = db.collection('contacts')
+  // contacts = db.collection('contacts')
 }
 
 async function listContacts(req, res) {
-    const data = await contacts.find().toArray();
-  res.status(HttpCodes.OK).json(data);
+    const contacts = await Contact.find();
+  res.status(HttpCodes.OK).json(contacts);
 
 }
 
@@ -66,44 +69,35 @@ function removeContact(req, res) {
 async function addContact(req, res) {
   const { body } = req;
   const newContact = await contacts.insertOne(body);
-  res.status(HttpCodes.CREATED).json(newContact);
-  // fsPromises.readFile(contactsPath, 'utf-8')
-  // .then(data => {
-  //   const newArr = JSON.parse(data);
-  //   const newContact = {id:uuidv4(), name, email, phone }
-  //   newArr.push(newContact)
-  //   fsPromises.writeFile(contactsPath, JSON.stringify(newArr))
-  //   res.status(HttpCodes.CREATED).json(newContact);
-  // })
-  // .catch(err => console.log(err))
+  res.status(HttpCodes.CREATED).json(newContact.ops[0]);
+ 
 }
 
-function updateContact(req, res) {
+async function updateContact(req, res) {
   const { body } = req;
   const { contactId } = req.params;
 
+  console.log(body);
 
-  if (!body.length) {
+  if (!body) {
     return res.status(HttpCodes.BAD_REQUEST).json({"message": "missing fields"})
   }
 
-  fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => {
-      const newContacts = JSON.parse(data).map(contact => {
-       return contact = contact.id == contactId ? { ...contact, ...body } : contact; 
-        }
-      )
-      const contactToChange = newContacts.filter(contact => contact.id == contactId)
+  if (!ObjectID.isValid(contactId)) {
+  return res.status(400).send({'message': 'Your ID is not valid'})
+}
 
-      fsPromises.writeFile(contactsPath, JSON.stringify(newContacts));
+  const contactToChange = await contacts.updateOne({
+    _id: ObjectID(contactId) 
+  }, {
+    $set: body
+  })
 
-      if (!contactToChange.length) {
+  if (!contactToChange) {
         return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
       }
 
      res.status(HttpCodes.OK).json(contactToChange);
-    })
-    .catch(err => console.log(err))
 
 }
 
