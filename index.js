@@ -1,7 +1,8 @@
 const cors = require('cors');
 const express = require('express');
-const { HttpCodes, PORT } = require('./assets/constants');
+const { PORT } = require('./assets/constants');
 const contactsRouter = require('./routes/contacts.routes');
+
 
 const app = express();
 app.use(cors({

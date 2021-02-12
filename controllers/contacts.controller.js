@@ -1,90 +1,100 @@
-const path = require('path');
-const { promises: fsPromises } = require('fs');
-const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
+const { Types: { ObjectId } } = require('mongoose');
 const Joi = require('joi');
+const dotenv = require('dotenv');
 
 const { HttpCodes } = require('../assets/constants');
+const Contact = require('../models/Contact');
 
-const contactsPath = path.join(__dirname,'../', 'db', 'contacts.json');
+dotenv.config();
 
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_NAME = process.env.DB_NAME;
 
-function listContacts(req, res) {
-  (fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => res.status(HttpCodes.OK).json(data)))
+const MONGO_URL = `mongodb+srv://JonhSnow:${DB_PASSWORD}@cluster0.heyeb.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
+
+start();
+
+function start() {
+ const connection = mongoose.connect(MONGO_URL, {
+   useUnifiedTopology: true 
+  });
+  connection
+    .then(() => { console.log("Database connection successful") })
+    .catch((err) => {
+      console.log(`Server not running. Error message: ${err.message}`)
+      process.exit(1)
+    }
+  );
 }
 
-function getContactById(req, res) {
+async function listContacts(req, res) {
+    const contacts = await Contact.find();
+  res.status(HttpCodes.OK).json(contacts);
+}
+
+async function getContactById(req, res) {
   const { contactId } = req.params;
-  fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => {
-      const contacts = JSON.parse(data);
-      const contact = contacts.filter(contact => contact.id == contactId);
 
-      if (!contact.length) {
-        return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
-      }
+  if (!ObjectId.isValid(contactId)) {
+  return res.status(400).send({'message': 'Your Id is not valid'})
+  }
+  
+  const contact = await Contact.findById(contactId);
 
-     res.status(HttpCodes.OK).json(contact);
-    })
-  .catch(err => res.status(HttpCodes.NOT_FOUND).json({"message": "Not found"}))
+  if (!contact) {
+    return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
+  }
+
+  res.status(HttpCodes.OK).json(contact)
 }
 
-function removeContact(req, res) {
+async function removeContact(req, res) {
   const { contactId } = req.params;
-  fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => {
-      const newContacts = JSON.parse(data).filter(contact => contact.id !== contactId)
-      fsPromises.writeFile(contactsPath, JSON.stringify(newContacts));
 
-      if (newContacts.length === JSON.parse(data).length) {
-        return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
-      }
-
-     res.status(HttpCodes.OK).json({"message": "contact deleted"});
-    })
-    .catch(err => console.log(err))
+ if (!ObjectId.isValid(contactId)) {
+  return res.status(400).send({'message': 'Your Id is not valid'})
 }
 
-function addContact(req, res) {
-  const { name, email, phone } = req.body;
+  const deletedContact = await Contact.findByIdAndDelete(contactId);
 
-  fsPromises.readFile(contactsPath, 'utf-8')
-  .then(data => {
-    const newArr = JSON.parse(data);
-    const newContact = {id:uuidv4(), name, email, phone }
-    newArr.push(newContact)
-    fsPromises.writeFile(contactsPath, JSON.stringify(newArr))
-    res.status(HttpCodes.CREATED).json(newContact);
-  })
-  .catch(err => console.log(err))
+  if (!deletedContact) {
+    return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
+  }
+  res.status(HttpCodes.OK).json({ "message": `contact ${deletedContact.name} deleted` });
 }
 
-function updateContact(req, res) {
+async function addContact(req, res) {
+  try {
+  const { body } = req;
+  const newContact = await Contact.create(body);
+  res.status(HttpCodes.CREATED).json(newContact);
+  } catch (err) {
+    res.status(400).send({'message': 'Something went wrong'})
+  }
+}
+
+async function updateContact(req, res) {
   const { body } = req;
   const { contactId } = req.params;
 
-
-  if (!body.length) {
+  if (!body) {
     return res.status(HttpCodes.BAD_REQUEST).json({"message": "missing fields"})
   }
 
-  fsPromises.readFile(contactsPath, 'utf-8')
-    .then(data => {
-      const newContacts = JSON.parse(data).map(contact => {
-       return contact = contact.id == contactId ? { ...contact, ...body } : contact; 
-        }
-      )
-      const contactToChange = newContacts.filter(contact => contact.id == contactId)
+  if (!ObjectId.isValid(contactId)) {
+  return res.status(400).send({'message': 'Your Id is not valid'})
+}
 
-      fsPromises.writeFile(contactsPath, JSON.stringify(newContacts));
-
-      if (!contactToChange.length) {
+ const contactToChange = await Contact.findByIdAndUpdate(contactId, body, {
+   new: true
+ })
+  
+ if (!contactToChange) {
         return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
       }
 
-     res.status(HttpCodes.OK).json(contactToChange);
-    })
-    .catch(err => console.log(err))
+  res.status(HttpCodes.OK).json(contactToChange);
 
 }
 
