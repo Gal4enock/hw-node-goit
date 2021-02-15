@@ -62,7 +62,8 @@ async function checkToken(req, res, next) {
 }
 
 async function logoutUser(req, res) {
-  if (!req.user) {
+  const user = req.user;
+  if (!user) {
     return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
   }
   const header = req.get('Authorization');
@@ -71,20 +72,17 @@ async function logoutUser(req, res) {
   return res.status(HttpCodes.NO_CONTENT).json({"message": "You're loged out"});
 }
 
-async function findUserById(req, res) {
-  const { userId } = req.params;
+async function getUser(req, res) {
+  const user = req.user;
 
-  if (!ObjectId.isValid(userId)) {
-  return res.status(400).send({'message': 'Your Id is not valid'})
-  }
-  
-  const user = await User.findById(userId);
-
-  if (!user) {
-    return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
+   if (!user) {
+    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
   }
 
-  res.status(HttpCodes.OK).json(user)
+  res.status(HttpCodes.OK).json({
+  "email": user.email,
+  "subscription": user.subscription
+})
 }
 
 async function createUser(req, res) {
@@ -121,10 +119,10 @@ function validationUser(req, res, next) {
 } 
 
 module.exports = {
-  findUserById,
   createUser,
   validationUser,
   loginUser,
   checkToken,
-  logoutUser
+  logoutUser,
+  getUser
 }
