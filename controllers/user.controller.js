@@ -8,8 +8,6 @@ const dotenv = require('dotenv');
 const { HttpCodes } = require('../assets/constants');
 const User = require('../models/User');
 
-// dotenv();
-
 async function loginUser(req, res) {
   const { email, password } = req.body;
   const user = await User.findOne({
@@ -35,6 +33,31 @@ async function loginUser(req, res) {
     "subscription": "free"
   }});
 } 
+
+async function checkToken(req, res, next) {
+  const header = req.get('Authorization');
+
+  if (!header) {
+    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
+  }
+
+  const token = header.replace('Bearer', '');
+
+  try {
+    const payload = await jwt.verify(token, process.env.JWT_SECRET);
+    const { userId } = payload;
+    const user = User.findUserById(userId);
+
+    if (!user) {
+       return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
+    }
+    next();
+
+  } catch (err) {
+    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
+  }
+
+}
 
 async function findUserById(req, res) {
   const { userId } = req.params;
@@ -89,5 +112,6 @@ module.exports = {
   findUserById,
   createUser,
   validationUser,
-  loginUser
+  loginUser,
+  checkToken
 }
