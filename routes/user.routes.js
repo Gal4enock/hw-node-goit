@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
-const { findUserById, findUserByEmail, createUser } = require('../controllers/user.controller');
+const { findUserById, findUserByEmail, createUser, validationUser, loginUser } = require('../controllers/user.controller');
 
-router.post('/auth/register', createUser);
-// router.post('/auth/login', );
-// router.post('/auth/register', );
+router.post('/register',validationUser, createUser);
+router.post('/login', loginUser);
+// router.post('/register', );
+
+module.exports = router;

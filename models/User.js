@@ -14,11 +14,11 @@ const UserSchema = new Schema({
   token: String
 })
 
-UserSchema.pre('save', async function (next) {
-  if (this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, bcrypt.genSaltSync(SALT_FACTOR))
-  next(); 
-})
+// UserSchema.pre('save', async function (next) {
+//   if (this.isModified('password')) return next();
+//   this.password = await bcrypt.hash(this.password, bcrypt.genSaltSync(SALT_FACTOR))
+//   next(); 
+// })
 
 const User = mongoose.model("User", UserSchema);
 
