@@ -51,12 +51,24 @@ async function checkToken(req, res, next) {
     if (!user) {
        return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
     }
+
+    req.user = user;
     next();
 
   } catch (err) {
     return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
   }
 
+}
+
+async function logoutUser(req, res) {
+  if (!req.user) {
+    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
+  }
+  const header = req.get('Authorization');
+  header.length = 0;
+
+  return res.status(HttpCodes.NO_CONTENT).json({"message": "You're loged out"});
 }
 
 async function findUserById(req, res) {
@@ -113,5 +125,6 @@ module.exports = {
   createUser,
   validationUser,
   loginUser,
-  checkToken
+  checkToken,
+  logoutUser
 }

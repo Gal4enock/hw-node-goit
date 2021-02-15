@@ -3,7 +3,8 @@ const HttpCodes = {
   CREATED: 201,
   BAD_REQUEST: 400,
   NOT_AUTORIZED: 401,
-  NOT_FOUND: 404
+  NOT_FOUND: 404,
+  NO_CONTENT: 204
 }
 
 const PORT = process.env.PORT || 3000;
