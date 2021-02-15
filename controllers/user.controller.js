@@ -8,11 +8,32 @@ const dotenv = require('dotenv');
 const { HttpCodes } = require('../assets/constants');
 const User = require('../models/User');
 
+// dotenv();
+
 async function loginUser(req, res) {
   const { email, password } = req.body;
   const user = await User.findOne({
     email
   })
+
+  if (!user) {
+    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
+  }
+
+  const token = await jwt.sign({
+    userID: user._id,
+  }, process.env.JWT_SECRET);
+
+  return res.status(HttpCodes.CREATED).json({"token": token,
+  "user": {
+    "email": email,
+    "subscription": "free"
+  }});
 } 
 
 async function findUserById(req, res) {
@@ -23,18 +44,6 @@ async function findUserById(req, res) {
   }
   
   const user = await User.findById(userId);
-
-  if (!user) {
-    return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
-  }
-
-  res.status(HttpCodes.OK).json(user)
-}
-
-async function findUserByEmail(req, res) {
-  const { email } = req.params;
-  
-  const user = await User.findOne({email});
 
   if (!user) {
     return res.status(HttpCodes.NOT_FOUND).json({ "message": "Not found" })
@@ -78,7 +87,6 @@ function validationUser(req, res, next) {
 
 module.exports = {
   findUserById,
-  findUserByEmail,
   createUser,
   validationUser,
   loginUser
