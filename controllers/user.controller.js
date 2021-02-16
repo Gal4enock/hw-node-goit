@@ -27,6 +27,10 @@ async function loginUser(req, res) {
     userID: user._id,
   }, process.env.JWT_SECRET);
 
+  await User.findOneAndUpdate({email}, { $set: { token } }, {
+   new: true
+ });
+
   return res.status(HttpCodes.CREATED).json({"token": token,
   "user": {
     "email": email,
@@ -87,15 +91,16 @@ async function getUser(req, res) {
 
 async function createUser(req, res) {
   try {
-    const { body: {email, password} } = req;
-    const hashPassword = await bcrypt.hash(password, 14);
-    const doubleUser = await User.findOne({ email })
+    const { body } = req;
+    const hashPassword = await bcrypt.hash(body.password, 14);
+    const doubleUser = await User.findOne({ email: body.email })
     if (doubleUser) {
       return res.status(HttpCodes.BAD_REQUEST).json({"message": "Email in use"});
     }
     const newUser = await User.create({
       ...body,
-      password: hashPassword
+      password: hashPassword,
+      token: ''
     });
   res.status(HttpCodes.CREATED).json(newUser);
   } catch (err) {
