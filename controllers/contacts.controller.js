@@ -29,7 +29,16 @@ function start() {
 }
 
 async function listContacts(req, res) {
-    const contacts = await Contact.find();
+  console.log(req.query);
+  const { page, limit } = req.query;
+  const options = {
+    page,
+    limit
+  }
+
+  const listedContacts = await Contact.paginate({}, options);
+  const contacts = await listedContacts.docs;
+    // const contacts = await Contact.find();
   res.status(HttpCodes.OK).json(contacts);
 }
 
