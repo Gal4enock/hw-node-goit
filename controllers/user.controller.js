@@ -68,7 +68,8 @@ async function checkToken(req, res, next) {
 
 async function logoutUser(req, res) {
   const user = req.user;
-  console.log("hello");
+  const { email } = user;
+  console.log("email", email);
   if (!user) {
     return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
   }
