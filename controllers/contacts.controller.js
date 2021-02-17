@@ -30,16 +30,25 @@ function start() {
 
 async function listContacts(req, res) {
   console.log(req.query);
-  const { page, limit } = req.query;
-  const options = {
-    page,
-    limit
-  }
+  let contacts;
+  const { page, limit, sub } = req.query;
+  if (page) {
 
-  const listedContacts = await Contact.paginate({}, options);
-  const contacts = await listedContacts.docs;
-    // const contacts = await Contact.find();
+    const options = {
+      page,
+      limit
+    }
+  
+    const listedContacts = await Contact.paginate({}, options);
+    contacts = listedContacts.docs;
+      
+  } else if (sub) {
+    contacts = await Contact.find({ subscription: sub });
+    
+  } else contacts = await Contact.find();
+
   res.status(HttpCodes.OK).json(contacts);
+
 }
 
 async function getContactById(req, res) {
