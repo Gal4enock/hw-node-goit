@@ -45,33 +45,37 @@ async function checkToken(req, res, next) {
     return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
   }
 
-  const token = header.replace('Bearer', '');
-
+  const token = header.replace('Bearer ', '');
   try {
     const payload = await jwt.verify(token, process.env.JWT_SECRET);
-    const { userId } = payload;
-    const user = User.findUserById(userId);
+    const { userID } = payload;
+    console.log('id', userID);
+    const user = await User.findById(userID);
+    console.log('user', user);
 
     if (!user) {
        return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
     }
-
-    req.user = user;
+  
+    req.user = user
     next();
 
   } catch (err) {
-    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
+    return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "No user"});
   }
 
 }
 
 async function logoutUser(req, res) {
   const user = req.user;
+  console.log("hello");
   if (!user) {
     return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
   }
-  const header = req.get('Authorization');
-  header.length = 0;
+
+  await User.findOneAndUpdate({email}, { $set: { token: '' } }, {
+   new: true
+ });
 
   return res.status(HttpCodes.NO_CONTENT).json({"message": "You're loged out"});
 }
