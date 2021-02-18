@@ -29,8 +29,26 @@ function start() {
 }
 
 async function listContacts(req, res) {
-    const contacts = await Contact.find();
+  console.log(req.query);
+  let contacts;
+  const { page, limit, sub } = req.query;
+  if (page) {
+
+    const options = {
+      page,
+      limit
+    }
+  
+    const listedContacts = await Contact.paginate({}, options);
+    contacts = listedContacts.docs;
+      
+  } else if (sub) {
+    contacts = await Contact.find({ subscription: sub });
+    
+  } else contacts = await Contact.find();
+
   res.status(HttpCodes.OK).json(contacts);
+
 }
 
 async function getContactById(req, res) {
