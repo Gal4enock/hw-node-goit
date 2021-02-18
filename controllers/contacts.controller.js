@@ -44,7 +44,7 @@ async function listContacts(req, res) {
       
   } else if (sub) {
     contacts = await Contact.find({ subscription: sub });
-    
+     
   } else contacts = await Contact.find();
 
   res.status(HttpCodes.OK).json(contacts);
