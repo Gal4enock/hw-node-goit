@@ -3,7 +3,9 @@ const { Types: { ObjectId } } = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
+const fs = require('fs');
 const dotenv = require('dotenv');
+const Avatar = require('avatar-builder');
 
 const { HttpCodes } = require('../assets/constants');
 const User = require('../models/User');
@@ -102,9 +104,17 @@ async function createUser(req, res) {
     if (doubleUser) {
       return res.status(HttpCodes.BAD_REQUEST).json({"message": "Email in use"});
     }
+    const avatar = Avatar.catBuilder(128);
+    const name = 'cat' + Date.now();
+    console.log("name", name);
+    const catAvatar = await fs.writeFile(`tmp/${name}.png`, avatar.create(name))
+    console.log("cat", avatar);
+    console.log('catAvatar', catAvatar);
+    
     const newUser = await User.create({
       ...body,
       password: hashPassword,
+      // avatarURL: avatar,
       token: ''
     });
   res.status(HttpCodes.CREATED).json(newUser);
