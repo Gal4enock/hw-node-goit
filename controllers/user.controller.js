@@ -104,12 +104,10 @@ async function createUser(req, res) {
     if (doubleUser) {
       return res.status(HttpCodes.BAD_REQUEST).json({"message": "Email in use"});
     }
-    const avatar = Avatar.catBuilder(128);
+    const avatar = await Avatar.catBuilder(128);
     const name = 'cat' + Date.now();
-    console.log("name", name);
-    const catAvatar = await fs.writeFile(`tmp/${name}.png`, avatar.create(name))
-    console.log("cat", avatar);
-    console.log('catAvatar', catAvatar);
+    const catAvatar = avatar.create(name);
+   fs.writeFileSync(`tmp/${name}.png`, catAvatar);
     
     const newUser = await User.create({
       ...body,
