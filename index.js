@@ -1,11 +1,26 @@
 const cors = require('cors');
 const express = require('express');
 const { PORT } = require('./assets/constants');
+const multer = require('multer');
 const contactsRouter = require('./routes/contacts.routes');
 const usersRouter = require('./routes/user.routes');
 
+const upload = multer({dest: 'public/images/'})
+
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'public/images/')
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.fieldname + '-' + Date.now())
+//   }
+// })
+ 
+// const upload = multer({ storage })
 
 const app = express();
+app.use(express.static('public'));
+
 app.use(cors({
   origin: '*',
 }));
