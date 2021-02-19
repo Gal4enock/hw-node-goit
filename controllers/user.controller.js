@@ -3,7 +3,7 @@ const { Types: { ObjectId } } = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
-const fs = require('fs');
+const { promises: fsPromises } = require('fs');
 const dotenv = require('dotenv');
 const Avatar = require('avatar-builder');
 
@@ -106,8 +106,8 @@ async function createUser(req, res) {
     }
     const avatar = await Avatar.catBuilder(128);
     const name = 'cat' + Date.now();
-    const catAvatar = avatar.create(name);
-   fs.writeFileSync(`tmp/${name}.png`, catAvatar);
+    const catAvatar = await avatar.create(name);
+   fsPromises.writeFileSync(`tmp/${name}.png`, catAvatar);
     
     const newUser = await User.create({
       ...body,
@@ -117,6 +117,7 @@ async function createUser(req, res) {
     });
   res.status(HttpCodes.CREATED).json(newUser);
   } catch (err) {
+    console.log(err);
     res.status(400).send({'message': 'Something went wrong'})
   }
 }
