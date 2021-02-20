@@ -7,6 +7,7 @@ const { promises: fsPromises } = require('fs');
 const dotenv = require('dotenv');
 const Avatar = require('avatar-builder');
 
+
 const { HttpCodes } = require('../assets/constants');
 const User = require('../models/User');
 
@@ -104,10 +105,10 @@ async function createUser(req, res) {
     if (doubleUser) {
       return res.status(HttpCodes.BAD_REQUEST).json({"message": "Email in use"});
     }
-    const avatar = await Avatar.catBuilder(128);
-    const name = 'cat' + Date.now();
+    const avatar = await Avatar.identiconBuilder(128);
+    const name = 'someOne' + Date.now();
     const catAvatar = await avatar.create(name);
-   fsPromises.writeFileSync(`tmp/${name}.png`, catAvatar);
+   fsPromises.writeFile(`tmp/${name}.png`, catAvatar);
     
     const newUser = await User.create({
       ...body,
@@ -143,5 +144,5 @@ module.exports = {
   loginUser,
   checkToken,
   logoutUser,
-  getUser
+  getUser,
 }
