@@ -4,9 +4,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
 const { promises: fsPromises } = require('fs');
-const dotenv = require('dotenv');
+const imagemin = require('imagemin');
+const imageminPngquant = require('imagemin-pngquant');
 const Avatar = require('avatar-builder');
-
 
 const { HttpCodes } = require('../assets/constants');
 const User = require('../models/User');
@@ -108,12 +108,27 @@ async function createUser(req, res) {
     const avatar = await Avatar.identiconBuilder(128);
     const name = 'someOne' + Date.now();
     const catAvatar = await avatar.create(name);
-   fsPromises.writeFile(`tmp/${name}.png`, catAvatar);
+    fsPromises.writeFile(`tmp/${name}.png`, catAvatar);
+
+    async function minimize() {
+    const files = await imagemin([`tmp/${name}.png`], {
+        destination: 'public/images',
+        plugins: [
+            imageminPngquant({
+                quality: [0.6, 0.8]
+            })
+        ]
+    });
+    };
     
+    minimize();
+
+    await fsPromises.unlink(`tmp/${name}.png`);
+
     const newUser = await User.create({
       ...body,
       password: hashPassword,
-      // avatarURL: avatar,
+      avatarURL: `localhost:3000/public/images/${name}.png`,
       token: ''
     });
   res.status(HttpCodes.CREATED).json(newUser);
