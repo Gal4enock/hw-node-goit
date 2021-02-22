@@ -19,7 +19,7 @@ const upload = multer({dest: 'public/images/'})
 // const upload = multer({ storage })
 
 const app = express();
-app.use(express.static('public'));
+app.use('/images', express.static('public'));
 
 app.use(cors({
   origin: '*',

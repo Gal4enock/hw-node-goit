@@ -7,9 +7,14 @@ const { promises: fsPromises } = require('fs');
 const imagemin = require('imagemin');
 const imageminPngquant = require('imagemin-pngquant');
 const Avatar = require('avatar-builder');
+const multer = require('multer');
 
 const { HttpCodes } = require('../assets/constants');
 const User = require('../models/User');
+
+
+ 
+
 
 async function loginUser(req, res) {
   const { email, password } = req.body;
@@ -54,7 +59,6 @@ async function checkToken(req, res, next) {
     const { userID } = payload;
     console.log('id', userID);
     const user = await User.findById(userID);
-    console.log('user', user);
 
     if (!user) {
        return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"});
@@ -97,20 +101,7 @@ async function getUser(req, res) {
 })
 }
 
-async function createUser(req, res) {
-  try {
-    const { body } = req;
-    const hashPassword = await bcrypt.hash(body.password, 14);
-    const doubleUser = await User.findOne({ email: body.email })
-    if (doubleUser) {
-      return res.status(HttpCodes.BAD_REQUEST).json({"message": "Email in use"});
-    }
-    const avatar = await Avatar.identiconBuilder(128);
-    const name = 'someOne' + Date.now();
-    const catAvatar = await avatar.create(name);
-    fsPromises.writeFile(`tmp/${name}.png`, catAvatar);
-
-    async function minimize() {
+ async function minimize(name) {
     const files = await imagemin([`tmp/${name}.png`], {
         destination: 'public/images',
         plugins: [
@@ -120,8 +111,21 @@ async function createUser(req, res) {
         ]
     });
     };
-    
-    minimize();
+
+async function createUser(req, res) {
+  const name = 'someOne' + Date.now();
+  try {
+    const { body } = req;
+    const hashPassword = await bcrypt.hash(body.password, 14);
+    const doubleUser = await User.findOne({ email: body.email })
+    if (doubleUser) {
+      return res.status(HttpCodes.BAD_REQUEST).json({"message": "Email in use"});
+    }
+    const avatar = await Avatar.identiconBuilder(128);
+    const catAvatar = await avatar.create(name);
+    fsPromises.writeFile(`tmp/${name}.png`, catAvatar);
+
+    minimize(name);
 
     await fsPromises.unlink(`tmp/${name}.png`);
 
@@ -137,6 +141,43 @@ async function createUser(req, res) {
     res.status(400).send({'message': 'Something went wrong'})
   }
 }
+
+// function loadAvatar(req, res, next) {
+//   const storage = multer.diskStorage({
+//   name: 'someOne' + Date.now(),
+//   destination: function (req, file, cb) {
+//     cb(null, 'tmp/')
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, this.name + 'png')
+//   }
+//   })
+//   const upload = multer({ storage })
+  
+//   next()
+//   return upload.single('avatar');
+  
+  
+// }
+
+async function changeFotos(req, res) {
+  try {
+    const user = req.user;
+    const link = user.avatarURL.replace('localhost:3000/', '')
+    // fsPromises.unlink(link);
+    const fileName = req.file.filename;
+    await minimize(fileName.replace('.png', ''));
+    await fsPromises.unlink(`tmp/${fileName}`);
+    const avatarURL = `localhost:3000/public/images/${fileName}`
+    await User.findOneAndUpdate({ _id: user._id }, { $set: { avatarURL } }, {
+      new: true
+    });
+
+  } catch (err) {
+    console.log(err);
+  }
+
+} 
 
 function validationUser(req, res, next) {
   const validationRules = Joi.object({
@@ -160,4 +201,5 @@ module.exports = {
   checkToken,
   logoutUser,
   getUser,
+  changeFotos,
 }
