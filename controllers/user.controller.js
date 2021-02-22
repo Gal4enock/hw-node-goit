@@ -163,6 +163,9 @@ async function createUser(req, res) {
 async function changeFotos(req, res) {
   try {
     const user = req.user;
+    if (!user) {
+      return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"})
+    }
     const link = user.avatarURL.replace('localhost:3000/', '')
     // fsPromises.unlink(link);
     const fileName = req.file.filename;
@@ -172,6 +175,10 @@ async function changeFotos(req, res) {
     await User.findOneAndUpdate({ _id: user._id }, { $set: { avatarURL } }, {
       new: true
     });
+
+    res.status(HttpCodes.OK).json({
+  "avatarURL": avatarURL
+});
 
   } catch (err) {
     console.log(err);
