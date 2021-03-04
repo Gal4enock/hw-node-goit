@@ -167,11 +167,11 @@ async function changeFotos(req, res) {
       return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"})
     }
     const link = user.avatarURL.replace('localhost:3000/', '')
-    // fsPromises.unlink(link);
+    fsPromises.unlink(link);
     const fileName = req.file.filename;
     await minimize(fileName.replace('.png', ''));
     await fsPromises.unlink(`tmp/${fileName}`);
-    const avatarURL = `localhost:3000/public/images/${fileName}`
+    const avatarURL = `localhost:3000/images/${fileName}`
     await User.findOneAndUpdate({ _id: user._id }, { $set: { avatarURL } }, {
       new: true
     });
