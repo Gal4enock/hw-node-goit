@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = require('mongoose');
 
+
 const UserSchema = new Schema({
   email: String,
   password: String,
@@ -10,7 +11,8 @@ const UserSchema = new Schema({
     enum: ["free", "pro", "premium"],
     default: "free"
   },
-  token: String
+  token: String,
+  verificationToken: String,
 })
 
 // UserSchema.pre('save', async function (next) {

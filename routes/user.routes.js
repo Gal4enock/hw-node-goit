@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { getUser, createUser, validationUser, loginUser, checkToken, logoutUser, changeFotos } = require('../controllers/user.controller');
+const { getUser, createUser, validationUser, loginUser, checkToken, logoutUser, changeFotos, verifyUser } = require('../controllers/user.controller');
 const multer = require('multer');
 
 // const name = 'someOne' + Date.now()
@@ -20,7 +20,8 @@ router.post('/register',validationUser, createUser);
 router.post('/login',validationUser, loginUser);
 router.post('/logout', checkToken, logoutUser);
 router.get('/users/current', checkToken, getUser);
-router.patch('/users/avatars',checkToken, upload.single('avatar'), changeFotos)
+router.patch('/users/avatars', checkToken, upload.single('avatar'), changeFotos);
+router.get('/verify/:verificationToken', verifyUser)
 
 
 module.exports = router;
