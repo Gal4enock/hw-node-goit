@@ -138,7 +138,9 @@ async function createUser(req, res) {
       token: '',
       verificationToken
     });
-  res.status(HttpCodes.CREATED).json(newUser);
+
+    await sendEmail(body.email, verificationToken)
+    res.status(HttpCodes.CREATED).json(newUser);
   } catch (err) {
     console.log(err);
     res.status(400).send({'message': 'Something went wrong'})
@@ -151,7 +153,7 @@ async function sendEmail(email, token) {
   to: email, // Change to your recipient
   from: 'gal4enock86@gmail.com', // Change to your verified sender
   subject: 'Please verify your account',
-  html: `<strong>Welcome!</strong> To verify your account please go by <a href = "http://localhost:3000//auth/verify/:${token}">link</a> `,
+  html: `<strong>Welcome!</strong> To verify your account please go by <a href="http://localhost:3000/auth/verify/${token}">link</a> `,
 }
 await sgMail
   .send(msg)
@@ -223,15 +225,25 @@ function validationUser(req, res, next) {
 } 
 
 async function verifyUser(req, res) {
-  const { verificationToken } = req.params;
+  try {
 
-  const user = await User.findOne({ verificationToken })
+    const { verificationToken } = req.params;
   
-  if (!user) {
-  return  res.status(HttpCodes.NOT_FOUND).json('User not found')
+    const user = await User.findOne({ verificationToken })
+  
+    
+    if (!user) {
+      return res.status(HttpCodes.NOT_FOUND).json('User not found')
+    }
+    if (user) {
+  
+      user.verificationToken = '',
+        await user.save();
+      res.status(HttpCodes.OK).json("You've successfully verified your email!")
+    }
+  } catch (err) {
+    console.log(err);
   }
-
-  res.status(HttpCodes.OK).json(user)
 }
 
 module.exports = {
