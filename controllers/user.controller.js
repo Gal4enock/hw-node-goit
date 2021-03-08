@@ -8,14 +8,15 @@ const imagemin = require('imagemin');
 const imageminPngquant = require('imagemin-pngquant');
 const Avatar = require('avatar-builder');
 const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const sgMail = require('@sendgrid/mail');
+const dotenv = require('dotenv');
 
 const { HttpCodes } = require('../assets/constants');
 const User = require('../models/User');
 
-
+dotenv.config();
  
-
-
 async function loginUser(req, res) {
   const { email, password } = req.body;
   const user = await User.findOne({
@@ -128,18 +129,40 @@ async function createUser(req, res) {
     minimize(name);
 
     await fsPromises.unlink(`tmp/${name}.png`);
+    const verificationToken = uuidv4();
 
     const newUser = await User.create({
       ...body,
       password: hashPassword,
       avatarURL: `localhost:3000/public/images/${name}.png`,
-      token: ''
+      token: '',
+      verificationToken
     });
-  res.status(HttpCodes.CREATED).json(newUser);
+
+    await sendEmail(body.email, verificationToken)
+    res.status(HttpCodes.CREATED).json(newUser);
   } catch (err) {
     console.log(err);
     res.status(400).send({'message': 'Something went wrong'})
   }
+}
+
+async function sendEmail(email, token) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY2)
+  const msg = {
+  to: email, // Change to your recipient
+  from: 'gal4enock86@gmail.com', // Change to your verified sender
+  subject: 'Please verify your account',
+  html: `<strong>Welcome!</strong> To verify your account please go by <a href="http://localhost:3000/auth/verify/${token}">link</a> `,
+}
+await sgMail
+  .send(msg)
+  .then(() => {
+    console.log('Email sent')
+  })
+  .catch((error) => {
+    console.error(error)
+  })
 }
 
 // function loadAvatar(req, res, next) {
@@ -167,11 +190,11 @@ async function changeFotos(req, res) {
       return res.status(HttpCodes.NOT_AUTORIZED).json({"message": "Not authorized"})
     }
     const link = user.avatarURL.replace('localhost:3000/', '')
-    // fsPromises.unlink(link);
+    fsPromises.unlink(link);
     const fileName = req.file.filename;
     await minimize(fileName.replace('.png', ''));
     await fsPromises.unlink(`tmp/${fileName}`);
-    const avatarURL = `localhost:3000/public/images/${fileName}`
+    const avatarURL = `localhost:3000/images/${fileName}`
     await User.findOneAndUpdate({ _id: user._id }, { $set: { avatarURL } }, {
       new: true
     });
@@ -201,6 +224,28 @@ function validationUser(req, res, next) {
   next();
 } 
 
+async function verifyUser(req, res) {
+  try {
+
+    const { verificationToken } = req.params;
+  
+    const user = await User.findOne({ verificationToken })
+  
+    
+    if (!user) {
+      return res.status(HttpCodes.NOT_FOUND).json('User not found')
+    }
+    if (user) {
+  
+      user.verificationToken = '',
+        await user.save();
+      res.status(HttpCodes.OK).json("You've successfully verified your email!")
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 module.exports = {
   createUser,
   validationUser,
@@ -209,4 +254,5 @@ module.exports = {
   logoutUser,
   getUser,
   changeFotos,
+  verifyUser
 }
